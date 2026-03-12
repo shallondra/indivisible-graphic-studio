@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Indivisible Graphic Studio</title>
+
+  <style>
+    /* ── Brand fonts loaded from local assets ── */
+    @font-face { font-family:'Barlow'; src:url('../Indivisible assets/Indivisible Project-selected-assets/Barlow/Barlow-Regular.ttf'); font-weight:400; }
+    @font-face { font-family:'Barlow'; src:url('../Indivisible assets/Indivisible Project-selected-assets/Barlow/Barlow-Bold.ttf'); font-weight:700; }
+    @font-face { font-family:'Barlow'; src:url('../Indivisible assets/Indivisible Project-selected-assets/Barlow/Barlow-Black.ttf'); font-weight:900; }
+    @font-face { font-family:'Barlow'; src:url('../Indivisible assets/Indivisible Project-selected-assets/Barlow/Barlow-Italic.ttf'); font-weight:400; font-style:italic; }
+    @font-face { font-family:'Barlow Condensed'; src:url('../Indivisible assets/Indivisible Project-selected-assets/Barlow Condensed/BarlowCondensed-Regular.ttf'); font-weight:400; }
+    @font-face { font-family:'Barlow Condensed'; src:url('../Indivisible assets/Indivisible Project-selected-assets/Barlow Condensed/BarlowCondensed-Bold.ttf'); font-weight:700; }
+    @font-face { font-family:'Barlow Condensed'; src:url('../Indivisible assets/Indivisible Project-selected-assets/Barlow Condensed/BarlowCondensed-Black.ttf'); font-weight:900; }
+    @font-face { font-family:'Barlow Condensed'; src:url('../Indivisible assets/Indivisible Project-selected-assets/Barlow Condensed/BarlowCondensed-ExtraBold.ttf'); font-weight:800; }
+    @font-face { font-family:'Barlow Semi Condensed'; src:url('../Indivisible assets/Indivisible Project-selected-assets/Barlow Semi Condensed/BarlowSemiCondensed-Regular.ttf'); font-weight:400; }
+    @font-face { font-family:'Barlow Semi Condensed'; src:url('../Indivisible assets/Indivisible Project-selected-assets/Barlow Semi Condensed/BarlowSemiCondensed-Bold.ttf'); font-weight:700; }
+    @font-face { font-family:'Public Sans'; src:url('../Indivisible assets/Indivisible Project-selected-assets/Public_Sans/PublicSans-VariableFont_wght.ttf'); }
+
+    /* ── Design tokens ── */
+    :root {
+      --ind-yellow: #ffba08; --ind-red: #ff0c0c; --ind-lblue: #21dee8; --ind-blue: #00417b;
+      --ui-bg:#141428; --panel:#1c1c38; --border:#2a2a50; --text:#e8e8f0; --muted:#6b6b90; --accent:#ffba08;
+    }
+
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Public Sans','Barlow',system-ui,sans-serif; background:var(--ui-bg); color:var(--text); height:100vh; display:flex; flex-direction:column; overflow:hidden; font-size:15px; }
+
+    /* ── Header ── */
+    .hdr { background:var(--ind-blue); padding:8px 14px; display:flex; align-items:center; gap:10px; border-bottom:3px solid var(--ind-yellow); flex-shrink:0; }
+    .hdr h1 { font-family:'Barlow Condensed',sans-serif; font-size:22px; font-weight:900; color:var(--ind-yellow); letter-spacing:1px; }
+    .hdr .sub { font-size:13px; color:rgba(255,255,255,0.6); }
+    .hdr .tpl-badge { margin-left:auto; background:rgba(255,186,8,.15); border:1px solid var(--ind-yellow); color:var(--ind-yellow); padding:2px 10px; border-radius:4px; font-size:13px; font-weight:700; }
+
+    /* ── Main 3-col layout ── */
+    .app { display:flex; flex:1; overflow:hidden; }
+
+    /* ── Panels ── */
+    .lp, .rp { width:240px; flex-shrink:0; background:var(--panel); overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:12px; }
+    .lp { border-right:1px solid var(--border); }
+    .rp { border-left:1px solid var(--border); width:270px; }
+
+    /* ── Canvas area ── */
+    .canvas-area { flex:1; display:flex; align-items:center; justify-content:center; overflow:auto; background:#0a0a18; padding:16px; }
+    .canvas-wrap { position:relative; padding-top:20px; padding-left:20px; }
+    canvas { display:block; }
+
+    /* ── Rulers ── */
+    .ruler-corner { position:absolute; top:0; left:0; width:20px; height:20px; background:#1c1c38; border-right:1px solid #2a2a50; border-bottom:1px solid #2a2a50; z-index:2; }
+    #ruler-h { position:absolute; top:0; left:20px; height:20px; background:#1c1c38; border-bottom:1px solid #2a2a50; z-index:2; display:block; }
+    #ruler-v { position:absolute; top:20px; left:0; width:20px; background:#1c1c38; border-right:1px solid #2a2a50; z-index:2; display:block; }
+
+    /* ── Section headers ── */
+    .sec { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--ind-yellow); padding-bottom:5px; border-bottom:1px solid var(--border); margin-bottom:7px; }
+
+    /* ── Buttons ── */
+    .btn { display:block; width:100%; padding:9px 12px; border:none; border-radius:4px; cursor:pointer; font-size:14px; font-weight:700; text-align:left; transition:background .12s; font-family:inherit; }
+    .btn + .btn { margin-top:3px; }
+    .btn-blue { background:var(--ind-blue); color:#fff; }
+    .btn-blue:hover { background:#0055a0; }
+    .btn-yellow { background:var(--ind-yellow); color:#000; }
+    .btn-yellow:hover { background:#e5a800; }
+    .btn-red { background:var(--ind-red); color:#fff; }
+    .btn-ghost { background:transparent; color:var(--text); border:1px solid var(--border); }
+    .btn-ghost:hover { background:rgba(255,255,255,.05); border-color:var(--accent); }
+    .btn-danger { background:#3a1010; color:#ff6666; border:1px solid #5a2020; }
+    .btn-danger:hover { background:#5a1a1a; }
+
+    /* ── Template buttons ── */
+    .tpl-btn { background:var(--ui-bg); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:4px; cursor:pointer; font-size:13px; text-align:left; width:100%; margin-bottom:3px; font-family:inherit; }
+    .tpl-btn:hover { border-color:var(--accent); }
+    .tpl-btn.active { border-color:var(--ind-yellow); background:rgba(255,186,8,.08); }
+    .tpl-btn strong { display:block; font-size:14px; }
+    .tpl-btn span { color:var(--muted); font-size:12px; }
+
+    /* ── Color swatches ── */
+    .swatch-row { display:flex; flex-wrap:wrap; gap:4px; }
+    .sw { width:26px; height:26px; border-radius:4px; cursor:pointer; border:2px solid transparent; transition:border .12s,transform .12s; }
+    .sw:hover, .sw.active { border-color:#fff; transform:scale(1.15); }
+
+    /* ── Form controls ── */
+    .fr { display:flex; flex-direction:column; gap:3px; margin-bottom:7px; }
+    .fr label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+    .fr input, .fr select, .fr textarea { background:var(--ui-bg); border:1px solid var(--border); color:var(--text); padding:6px 8px; border-radius:4px; font-size:14px; width:100%; font-family:inherit; }
+    .fr textarea { resize:vertical; min-height:55px; line-height:1.4; }
+    .fr input:focus, .fr select:focus, .fr textarea:focus { outline:none; border-color:var(--accent); }
+    input[type=range] { width:100%; accent-color:var(--accent); }
+    .row2 { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+
+    /* ── Position grid ── */
+    .pos-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:3px; }
+    .pos-btn { padding:5px; background:var(--ui-bg); border:1px solid var(--border); color:var(--text); border-radius:3px; cursor:pointer; font-size:14px; text-align:center; }
+    .pos-btn:hover { border-color:var(--accent); background:rgba(255,186,8,.08); }
+
+    /* ── Layer list ── */
+    .layer { display:flex; align-items:center; gap:6px; padding:5px 7px; border-radius:3px; cursor:pointer; font-size:13px; margin-bottom:2px; }
+    .layer:hover { background:rgba(255,255,255,.04); }
+    .layer.sel { background:rgba(255,186,8,.1); border:1px solid rgba(255,186,8,.3); }
+    .layer-icon { font-size:15px; }
+    .layer-lbl { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .layer-del { color:#ff5555; cursor:pointer; padding:1px 5px; border-radius:2px; font-size:15px; }
+    .layer-del:hover { background:rgba(255,68,68,.2); }
+    .layer-vis { color:var(--muted); cursor:pointer; font-size:13px; }
+
+    /* ── Logo picker ── */
+    .logo-grid { display:grid; grid-template-columns:1fr 1fr; gap:3px; }
+    .logo-btn { background:var(--ui-bg); border:1px solid var(--border); color:var(--text); padding:6px; border-radius:4px; cursor:pointer; font-size:12px; text-align:center; font-family:inherit; }
+    .logo-btn:hover { border-color:var(--accent); }
+
+    /* ── Char counter ── */
+    .cc { font-size:12px; color:var(--muted); text-align:right; }
+    .cc.warn { color:#ffba08; } .cc.over { color:#ff0c0c; }
+
+    /* ── Status bar ── */
+    .status { background:#080814; padding:4px 12px; font-size:12px; color:var(--muted); display:flex; gap:14px; flex-shrink:0; border-top:1px solid var(--border); }
+    .status span { display:flex; align-items:center; gap:4px; }
+
+    /* ── Presets ── */
+    .preset-card { border:1px solid var(--border); border-radius:5px; padding:7px; cursor:pointer; margin-bottom:5px; }
+    .preset-card:hover { border-color:var(--accent); }
+    .preset-card strong { font-size:14px; }
+    .preset-dots { display:flex; gap:3px; margin-top:4px; }
+    .preset-dot { width:12px; height:12px; border-radius:50%; }
+    .preset-card .preset-font { font-size:10px; color:var(--muted); margin-top:2px; }
+
+    /* ── Props placeholder ── */
+    .no-sel { color:var(--muted); font-size:11px; text-align:center; padding:16px 0; }
+
+    /* ── Separator ── */
+    hr { border:none; border-top:1px solid var(--border); margin:4px 0; }
+
+    /* ── Background picker hint ── */
+    .bg-swatch-row { display:flex; flex-wrap:wrap; gap:4px; align-items:center; }
+    .bg-custom { width:26px; height:26px; border-radius:4px; cursor:pointer; border:2px solid var(--border); background:transparent; padding:0; overflow:hidden; }
+    .bg-custom input[type=color] { width:34px; height:34px; border:none; cursor:pointer; transform:translate(-4px,-4px); }
+
+    /* ── Scrollbars ── */
+    ::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-track { background:var(--ui-bg); } ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+  </style>
+</head>
+
+<body>
+
+<!-- ═══════════════════════════════ HEADER ═══════════════════════════════ -->
+<header class="hdr">
+  <h1>✊ Indivisible Graphic Studio</h1>
+  <span class="sub">Auburn WA · No Kings campaign</span>
+  <span class="tpl-badge" id="tpl-badge">No template</span>
+</header>
+
+<!-- ═══════════════════════════════ MAIN ════════════════════════════════ -->
+<div class="app">
+
+  <!-- ══ LEFT PANEL ══ -->
+  <aside class="lp">
+
+    <!-- Templates -->
+    <div>
+      <div class="sec">Templates</div>
+      <button class="tpl-btn" data-tpl="ig" onclick="applyTemplate('ig')">
+        <strong>Instagram Post</strong><span>1080 × 1080 px</span>
+      </button>
+      <button class="tpl-btn" data-tpl="fb" onclick="applyTemplate('fb')">
+        <strong>Facebook Post</strong><span>1200 × 630 px</span>
+      </button>
+      <button class="tpl-btn" data-tpl="bs" onclick="applyTemplate('bs')">
+        <strong>Bluesky Post</strong><span>1080 × 1080 px</span>
+      </button>
+      <button class="tpl-btn" data-tpl="bsh" onclick="applyTemplate('bsh')">
+        <strong>Bluesky Header</strong><span>3000 × 1000 px</span>
+      </button>
+      <button class="tpl-btn" data-tpl="eb" onclick="applyTemplate('eb')">
+        <strong>Event Banner</strong><span>1920 × 1080 px</span>
+      </button>
+    </div>
+
+    <!-- Background -->
+    <div>
+      <div class="sec">Background</div>
+      <div class="bg-swatch-row" id="bg-swatches">
+        <div class="sw" style="background:#00417b" title="Indivisible Blue" onclick="setBg('#00417b')"></div>
+        <div class="sw" style="background:#ffba08" title="Indivisible Yellow" onclick="setBg('#ffba08')"></div>
+        <div class="sw" style="background:#ff0c0c" title="Indivisible Red" onclick="setBg('#ff0c0c')"></div>
+        <div class="sw" style="background:#21dee8" title="Light Blue" onclick="setBg('#21dee8')"></div>
+        <div class="sw" style="background:#000000;border:1px solid #333" title="Black" onclick="setBg('#000000')"></div>
+        <div class="sw" style="background:#ffffff;border:1px solid #444" title="White" onclick="setBg('#ffffff')"></div>
+        <div class="sw" style="background:#1a1a2e" title="Dark Navy" onclick="setBg('#1a1a2e')"></div>
+        <label class="bg-custom" title="Custom color"><input type="color" id="bg-custom-color" oninput="setBg(this.value)" value="#00417b"></label>
+      </div>
+    </div>
+
+    <!-- Brand Presets -->
+    <div>
+      <div class="sec">Brand Presets</div>
+      <div class="preset-card" onclick="applyBrandPreset('indivisible')">
+        <strong>Indivisible Auburn WA</strong>
+        <div class="preset-dots">
+          <div class="preset-dot" style="background:#00417b"></div>
+          <div class="preset-dot" style="background:#ffba08"></div>
+          <div class="preset-dot" style="background:#ff0c0c"></div>
+          <div class="preset-dot" style="background:#21dee8"></div>
+        </div>
+        <div class="preset-font">Barlow Condensed Black · Public Sans</div>
+      </div>
+      <div class="preset-card" onclick="applyBrandPreset('nokings')">
+        <strong>No Kings Campaign</strong>
+        <div class="preset-dots">
+          <div class="preset-dot" style="background:#000000;border:1px solid #555"></div>
+          <div class="preset-dot" style="background:#ffba08"></div>
+          <div class="preset-dot" style="background:#ffffff;border:1px solid #555"></div>
+        </div>
+        <div class="preset-font">Barlow Condensed Black · Barlow</div>
+      </div>
+    </div>
+
+    <!-- Add Elements -->
+    <div>
+      <div class="sec">Add to Canvas</div>
+      <button class="btn btn-blue" onclick="addText()">＋ Text Box</button>
+      <button class="btn btn-ghost" onclick="addHeadline()">＋ Headline (large)</button>
+      <button class="btn btn-ghost" onclick="triggerImageUpload()">📷 Upload Image</button>
+      <input type="file" id="img-upload" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
+      <button class="btn btn-ghost" onclick="addShape('rect')">▭ Rectangle</button>
+      <button class="btn btn-ghost" onclick="addShape('circle')">◯ Ellipse</button>
+    </div>
+
+    <!-- Logos & Icons -->
+    <div>
+      <div class="sec">Add Logo / Icon</div>
+      <div class="logo-grid">
+        <button class="logo-btn" onclick="addLocalImage('nk-logo-dark')">NK Logo<br><small>Dark BG</small></button>
+        <button class="logo-btn" onclick="addLocalImage('nk-logo-light')">NK Logo<br><small>Light BG</small></button>
+        <button class="logo-btn" onclick="addLocalImage('nk-crown')">NK Crown<br><small>Icon</small></button>
+        <button class="logo-btn" onclick="addLocalImage('nk-full')">NK Full<br><small>Logo</small></button>
+      </div>
+      <div style="margin-top:4px;">
+        <div class="sec" style="margin-top:6px;">Indivisible Icons</div>
+        <div class="logo-grid">
+          <button class="logo-btn" onclick="addLocalImage('icon-bullhorn')">📢 Bullhorn</button>
+          <button class="logo-btn" onclick="addLocalImage('icon-capitol')">🏛 Capitol</button>
+          <button class="logo-btn" onclick="addLocalImage('icon-calendar')">📅 Calendar</button>
+          <button class="logo-btn" onclick="addLocalImage('icon-flag')">🏳 Flag</button>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ══ CANVAS ══ -->
+  <main class="canvas-area">
+    <div class="canvas-wrap" id="canvas-wrap">
+      <div class="ruler-corner"></div>
+      <canvas id="ruler-h"></canvas>
+      <canvas id="ruler-v"></canvas>
+      <canvas id="main-canvas"></canvas>
+    </div>
+  </main>
+
+  <!-- ══ RIGHT PANEL ══ -->
+  <aside class="rp">
+
+    <!-- Object Properties -->
+    <div>
+      <div class="sec">Object Properties</div>
+      <div id="props-area">
+        <p class="no-sel">Select an object to edit its properties</p>
+      </div>
+    </div>
+
+    <!-- Layers -->
+    <div>
+      <div class="sec">Layers <span style="float:right;cursor:pointer;color:var(--muted)" onclick="refreshLayers()" title="Refresh">↻</span></div>
+      <div id="layer-list"></div>
+    </div>
+
+    <!-- Alt Text -->
+    <div>
+      <div class="sec">Alt Text (Accessibility)</div>
+      <div class="fr">
+        <label>Short alt (≤125 chars)</label>
+        <textarea id="alt-short" placeholder="Brief description for social media" oninput="updateCC('alt-short','cc-short',125)"></textarea>
+        <div class="cc" id="cc-short">0 / 125</div>
+      </div>
+      <div class="fr">
+        <label>Full accessible description</label>
+        <textarea id="alt-long" placeholder="Describe colors, layout, text content, and any images for screen reader users." style="min-height:80px" oninput="updateCC('alt-long','cc-long',500)"></textarea>
+        <div class="cc" id="cc-long">0 / 500</div>
+      </div>
+      <button class="btn btn-ghost" onclick="copyAlt()">📋 Copy Alt Text</button>
+      <button class="btn btn-ghost" onclick="autoSuggestAlt()">✨ Auto-suggest from canvas</button>
+    </div>
+
+    <!-- Download -->
+    <div>
+      <div class="sec">Export</div>
+      <div class="fr">
+        <label>Filename</label>
+        <input type="text" id="export-name" value="indivisible-graphic" placeholder="filename (no extension)">
+      </div>
+      <button class="btn btn-yellow" onclick="downloadPNG()" style="text-align:center;font-size:14px;">⬇ Download PNG</button>
+      <button class="btn btn-ghost" style="margin-top:3px" onclick="downloadJSON()">💾 Save Project (.json)</button>
+      <button class="btn btn-ghost" style="margin-top:3px" onclick="triggerLoadJSON()">📂 Load Project (.json)</button>
+      <input type="file" id="json-upload" accept=".json" style="display:none" onchange="loadJSON(event)">
+    </div>
+
+    <!-- Canvas Info -->
+    <div>
+      <div class="sec">Canvas Size</div>
+      <div id="canvas-info" style="font-size:11px;color:var(--muted);">No template loaded</div>
+    </div>
+
+  </aside>
+</div>
+
+<!-- ══ STATUS BAR ══ -->
+<div class="status">
+  <span>✊ Indivisible Graphic Studio v1.1</span>
+  <span id="status-xy">x:— y:—</span>
+  <span id="status-obj">No object selected</span>
+  <span id="status-zoom">Zoom: —</span>
+</div>
+
+<!-- ═══════════════════ PROPERTIES TEMPLATES (hidden) ════════════════════ -->
+<template id="tpl-text-props">
+  <div class="fr">
+    <label>Text</label>
+    <textarea id="prop-text" rows="3" oninput="updateProp('text',this.value)"></textarea>
+  </div>
+  <div class="fr">
+    <label>Font Family</label>
+    <select id="prop-font" onchange="updateProp('fontFamily',this.value)">
+      <option value="Barlow Condensed">Barlow Condensed</option>
+      <option value="Barlow Semi Condensed">Barlow Semi Condensed</option>
+      <option value="Barlow">Barlow</option>
+      <option value="Public Sans">Public Sans</option>
+    </select>
+  </div>
+  <div class="row2">
+    <div class="fr">
+      <label>Size (px)</label>
+      <input type="number" id="prop-size" min="8" max="600" oninput="updateProp('fontSize',+this.value)">
+    </div>
+    <div class="fr">
+      <label>Weight</label>
+      <select id="prop-weight" onchange="updateProp('fontWeight',this.value)">
+        <option value="400">Regular</option>
+        <option value="700">Bold</option>
+        <option value="800">ExtraBold</option>
+        <option value="900">Black</option>
+      </select>
+    </div>
+  </div>
+  <div class="fr">
+    <label>Color</label>
+    <div class="swatch-row" id="prop-color-swatches">
+      <div class="sw" style="background:#ffffff;border:1px solid #444" onclick="updateProp('fill','#ffffff')"></div>
+      <div class="sw" style="background:#000000;border:1px solid #333" onclick="updateProp('fill','#000000')"></div>
+      <div class="sw" style="background:#ffba08" onclick="updateProp('fill','#ffba08')"></div>
+      <div class="sw" style="background:#ff0c0c" onclick="updateProp('fill','#ff0c0c')"></div>
+      <div class="sw" style="background:#21dee8" onclick="updateProp('fill','#21dee8')"></div>
+      <div class="sw" style="background:#00417b" onclick="updateProp('fill','#00417b')"></div>
+      <input type="color" id="prop-color-custom" oninput="updateProp('fill',this.value)" title="Custom color" style="width:26px;height:26px;border-radius:4px;cursor:pointer;border:2px solid var(--border);background:transparent;">
+    </div>
+  </div>
+  <div class="fr">
+    <label>Alignment</label>
+    <div class="row2">
+      <select id="prop-align" onchange="updateProp('textAlign',this.value)">
+        <option value="left">Left</option>
+        <option value="center">Center</option>
+        <option value="right">Right</option>
+      </select>
+      <select id="prop-style" onchange="updatePropStyle(this.value)">
+        <option value="normal">Normal</option>
+        <option value="italic">Italic</option>
+        <option value="underline">Underline</option>
+      </select>
+    </div>
+  </div>
+  <div class="fr">
+    <label>Opacity <span id="opacity-val">100</span>%</label>
+    <input type="range" id="prop-opacity" min="0" max="100" value="100" oninput="updateProp('opacity',this.value/100);document.getElementById('opacity-val').textContent=this.value">
+  </div>
+  <div class="sec" style="margin-top:8px">Auto-position</div>
+  <div class="pos-grid">
+    <button class="pos-btn" onclick="positionObj('tl')" title="Top Left">↖</button>
+    <button class="pos-btn" onclick="positionObj('tc')" title="Top Center">↑</button>
+    <button class="pos-btn" onclick="positionObj('tr')" title="Top Right">↗</button>
+    <button class="pos-btn" onclick="positionObj('ml')" title="Middle Left">←</button>
+    <button class="pos-btn" onclick="positionObj('mc')" title="Center">⊙</button>
+    <button class="pos-btn" onclick="positionObj('mr')" title="Middle Right">→</button>
+    <button class="pos-btn" onclick="positionObj('bl')" title="Bottom Left">↙</button>
+    <button class="pos-btn" onclick="positionObj('bc')" title="Bottom Center">↓</button>
+    <button class="pos-btn" onclick="positionObj('br')" title="Bottom Right">↘</button>
+  </div>
+  <hr style="margin:8px 0">
+  <button class="btn btn-danger" onclick="deleteSelected()" style="text-align:center">🗑 Delete Object</button>
+</template>
+
+<template id="tpl-image-props">
+  <div class="fr">
+    <label>Opacity <span id="img-opacity-val">100</span>%</label>
+    <input type="range" id="img-prop-opacity" min="0" max="100" value="100" oninput="updateProp('opacity',this.value/100);document.getElementById('img-opacity-val').textContent=this.value">
+  </div>
+  <div class="sec" style="margin-top:8px">Position</div>
+  <div class="pos-grid">
+    <button class="pos-btn" onclick="positionObj('tl')">↖</button>
+    <button class="pos-btn" onclick="positionObj('tc')">↑</button>
+    <button class="pos-btn" onclick="positionObj('tr')">↗</button>
+    <button class="pos-btn" onclick="positionObj('ml')">←</button>
+    <button class="pos-btn" onclick="positionObj('mc')">⊙</button>
+    <button class="pos-btn" onclick="positionObj('mr')">→</button>
+    <button class="pos-btn" onclick="positionObj('bl')">↙</button>
+    <button class="pos-btn" onclick="positionObj('bc')">↓</button>
+    <button class="pos-btn" onclick="positionObj('br')">↘</button>
+  </div>
+  <div class="fr" style="margin-top:8px">
+    <label>Fit to canvas</label>
+    <div class="row2">
+      <button class="btn btn-ghost" style="font-size:11px;text-align:center" onclick="fitObj('contain')">Contain</button>
+      <button class="btn btn-ghost" style="font-size:11px;text-align:center" onclick="fitObj('cover')">Fill</button>
+    </div>
+  </div>
+  <hr style="margin:8px 0">
+  <button class="btn btn-ghost" onclick="sendBack()" style="font-size:11px">⬇ Send Backward</button>
+  <button class="btn btn-ghost" onclick="bringForward()" style="margin-top:3px;font-size:11px">⬆ Bring Forward</button>
+  <hr style="margin:8px 0">
+  <button class="btn btn-danger" onclick="deleteSelected()" style="text-align:center">🗑 Delete Object</button>
+</template>
+
+<template id="tpl-shape-props">
+  <div class="fr">
+    <label>Fill Color</label>
+    <div class="swatch-row">
+      <div class="sw" style="background:#00417b" onclick="updateProp('fill','#00417b')"></div>
+      <div class="sw" style="background:#ffba08" onclick="updateProp('fill','#ffba08')"></div>
+      <div class="sw" style="background:#ff0c0c" onclick="updateProp('fill','#ff0c0c')"></div>
+      <div class="sw" style="background:#21dee8" onclick="updateProp('fill','#21dee8')"></div>
+      <div class="sw" style="background:#000000;border:1px solid #333" onclick="updateProp('fill','#000000')"></div>
+      <div class="sw" style="background:#ffffff;border:1px solid #444" onclick="updateProp('fill','#ffffff')"></div>
+      <div class="sw" style="background:transparent;border:1px solid #666" onclick="updateProp('fill','transparent')">∅</div>
+      <input type="color" oninput="updateProp('fill',this.value)" style="width:26px;height:26px;border-radius:4px;cursor:pointer;border:2px solid var(--border);">
+    </div>
+  </div>
+  <div class="row2">
+    <div class="fr">
+      <label>Stroke Color</label>
+      <input type="color" id="prop-stroke" oninput="updateProp('stroke',this.value)" style="height:30px;width:100%;border-radius:4px;cursor:pointer;">
+    </div>
+    <div class="fr">
+      <label>Stroke Width</label>
+      <input type="number" id="prop-stroke-w" min="0" max="50" value="0" oninput="updateProp('strokeWidth',+this.value)">
+    </div>
+  </div>
+  <div class="fr">
+    <label>Opacity <span id="shape-opacity-val">100</span>%</label>
+    <input type="range" id="shape-prop-opacity" min="0" max="100" value="100" oninput="updateProp('opacity',this.value/100);document.getElementById('shape-opacity-val').textContent=this.value">
+  </div>
+  <hr style="margin:8px 0">
+  <button class="btn btn-ghost" onclick="sendBack()" style="font-size:11px">⬇ Send Backward</button>
+  <button class="btn btn-ghost" onclick="bringForward()" style="margin-top:3px;font-size:11px">⬆ Bring Forward</button>
+  <hr style="margin:8px 0">
+  <button class="btn btn-danger" onclick="deleteSelected()" style="text-align:center">🗑 Delete Object</button>
+</template>
+
+<!-- ═══════════════════════════ SCRIPTS ═══════════════════════════════ -->
+<script src="fabric.min.js"></script>
+
+<script>
+'use strict';
+
+// ═══════════════════════ CONSTANTS ═══════════════════════
+const ASSET_BASE = '../Indivisible assets';
+
+const TEMPLATES = {
+  ig:  { key:'ig',  w:1080, h:1080, name:'Instagram Post',   dim:'1080×1080' },
+  fb:  { key:'fb',  w:1200, h:630,  name:'Facebook Post',    dim:'1200×630'  },
+  bs:  { key:'bs',  w:1080, h:1080, name:'Bluesky Post',     dim:'1080×1080' },
+  bsh: { key:'bsh', w:3000, h:1000, name:'Bluesky Header',   dim:'3000×1000' },
+  eb:  { key:'eb',  w:1920, h:1080, name:'Event Banner',     dim:'1920×1080' },
+};
+
+const BRAND = {
+  indivisible: {
+    name:'Indivisible Auburn WA',
+    bg:'#00417b', textColor:'#ffffff', accentColor:'#ffba08',
+    headFont:'Barlow Condensed', bodyFont:'Public Sans',
+    headWeight:'900',
+  },
+  nokings: {
+    name:'No Kings Campaign',
+    bg:'#000000', textColor:'#ffba08', accentColor:'#ffffff',
+    headFont:'Barlow Condensed', bodyFont:'Barlow',
+    headWeight:'900',
+  },
+};
+
+const LOCAL_IMAGES = {
+  'nk-logo-dark':   `${ASSET_BASE}/No Kings-selected-assets (1)/No Kings Logo_Horizontal_ForDarkBackgrounds.png`,
+  'nk-logo-light':  `${ASSET_BASE}/No Kings-selected-assets (1)/No Kings Logo_Horizontal_ForLightBackgrounds.png`,
+  'nk-crown':       `${ASSET_BASE}/No Kings-selected-assets (1)/NK Crown400px.png`,
+  'nk-full':        `${ASSET_BASE}/No Kings-selected-assets (1)/NK Full Logo.png`,
+  'icon-bullhorn':  `${ASSET_BASE}/Indivisible Project-selected-assets/Indivisible Icons_bullhorn.png`,
+  'icon-capitol':   `${ASSET_BASE}/Indivisible Project-selected-assets/Indivisible Icons_capitol.png`,
+  'icon-calendar':  `${ASSET_BASE}/Indivisible Project-selected-assets/Indivisible Icons_calendar.png`,
+  'icon-flag':      `${ASSET_BASE}/Indivisible Project-selected-assets/Indivisible Icons_flag.png`,
+};
+
+const MAX_DISPLAY_W = 780;
+const MAX_DISPLAY_H = 520;
+
+// ═══════════════════════ STATE ═══════════════════════
+const S = {
+  canvas: null,
+  template: null,
+  zoom: 1,
+  currentBrand: null,
+};
+
+// ═══════════════════════ INIT ═══════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  S.canvas = new fabric.Canvas('main-canvas', {
+    selection: true,
+    preserveObjectStacking: true,
+  });
+
+  S.canvas.on('selection:created',  updatePropsPanel);
+  S.canvas.on('selection:updated',  updatePropsPanel);
+  S.canvas.on('selection:cleared',  clearPropsPanel);
+  S.canvas.on('object:modified',    () => { refreshLayers(); updateStatusObj(); });
+  S.canvas.on('object:added',       (e) => {
+    refreshLayers();
+    if (e.target && e.target.type === 'image') {
+      extractImageColors(e.target, (colors) => refreshBgSwatches(S.currentBrand, colors));
+    }
+  });
+  S.canvas.on('object:removed',     () => refreshLayers());
+  S.canvas.on('mouse:move',         (e) => {
+    if (!S.template) return;
+    const p = S.canvas.getPointer(e.e);
+    const x = Math.round(p.x / S.zoom);
+    const y = Math.round(p.y / S.zoom);
+    document.getElementById('status-xy').textContent = `x:${x} y:${y}`;
+  });
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if ((e.key === 'Delete' || e.key === 'Backspace') && S.canvas.getActiveObject()) {
+      deleteSelected();
+    }
+    if (e.key === 'Escape') S.canvas.discardActiveObject().renderAll();
+  });
+
+  // Load fonts into FontFace API so Fabric can render them
+  preloadFonts();
+
+  // Default template
+  applyTemplate('ig');
+});
+
+// ═══════════════════════ FONT PRELOAD ═══════════════════════
+async function preloadFonts() {
+  const fonts = [
+    { family:'Barlow Condensed', weight:'900', path:'Barlow Condensed/BarlowCondensed-Black.ttf' },
+    { family:'Barlow Condensed', weight:'700', path:'Barlow Condensed/BarlowCondensed-Bold.ttf' },
+    { family:'Barlow Condensed', weight:'400', path:'Barlow Condensed/BarlowCondensed-Regular.ttf' },
+    { family:'Barlow',           weight:'700', path:'Barlow/Barlow-Bold.ttf' },
+    { family:'Barlow',           weight:'400', path:'Barlow/Barlow-Regular.ttf' },
+    { family:'Public Sans',      weight:'400', path:'Public_Sans/PublicSans-VariableFont_wght.ttf' },
+  ];
+  const base = `${ASSET_BASE}/Indivisible Project-selected-assets`;
+  for (const f of fonts) {
+    try {
+      const ff = new FontFace(f.family, `url(${base}/${f.path})`, { weight: f.weight });
+      await ff.load();
+      document.fonts.add(ff);
+    } catch(e) {
+      console.warn(`Font load failed: ${f.family} ${f.weight}`, e);
+    }
+  }
+}
+
+// ═══════════════════════ TEMPLATES ═══════════════════════
+function applyTemplate(key) {
+  const tpl = TEMPLATES[key];
+  if (!tpl) return;
+
+  const scaleX = MAX_DISPLAY_W / tpl.w;
+  const scaleY = MAX_DISPLAY_H / tpl.h;
+  const zoom   = Math.min(scaleX, scaleY, 1);
+
+  const dw = Math.round(tpl.w * zoom);
+  const dh = Math.round(tpl.h * zoom);
+
+  // Clear canvas and resize
+  S.canvas.clear();
+  S.canvas.setWidth(dw);
+  S.canvas.setHeight(dh);
+  S.canvas.setZoom(zoom);
+  S.canvas.setBackgroundColor('#00417b', S.canvas.renderAll.bind(S.canvas));
+
+  S.template = { ...tpl, zoom };
+  S.zoom = zoom;
+
+  // Update UI
+  document.querySelectorAll('.tpl-btn').forEach(b => b.classList.toggle('active', b.dataset.tpl === key));
+  document.getElementById('tpl-badge').textContent = `${tpl.name} · ${tpl.dim}`;
+  document.getElementById('canvas-info').textContent = `${tpl.w} × ${tpl.h} px · Display: ${Math.round(zoom*100)}%`;
+  document.getElementById('status-zoom').textContent = `Zoom: ${Math.round(zoom*100)}%`;
+
+  refreshLayers();
+  drawRulers();
+  refreshBgSwatches(S.currentBrand);
+}
+
+// ═══════════════════════ BACKGROUND ═══════════════════════
+function setBg(color) {
+  if (!S.canvas) return;
+  S.canvas.setBackgroundColor(color, S.canvas.renderAll.bind(S.canvas));
+  document.getElementById('bg-custom-color').value = color.length === 7 ? color : '#000000';
+}
+
+// ═══════════════════════ BRAND PRESETS ═══════════════════════
+function applyBrandPreset(key) {
+  const b = BRAND[key];
+  if (!b) return;
+  S.currentBrand = b;
+  setBg(b.bg);
+
+  // If there are existing text objects, re-style them
+  S.canvas.getObjects('textbox').forEach(obj => {
+    obj.set({ fontFamily: b.headFont, fill: b.textColor, fontWeight: b.headWeight });
+  });
+  S.canvas.renderAll();
+  refreshBgSwatches(b);
+}
+
+// ═══════════════════════ RULERS ═══════════════════════
+function drawRulers() {
+  if (!S.template) return;
+  const dw = S.canvas.getWidth();
+  const dh = S.canvas.getHeight();
+  const vw = S.template.w;
+  const vh = S.template.h;
+
+  const rh = document.getElementById('ruler-h');
+  const rv = document.getElementById('ruler-v');
+  rh.width = dw;  rh.height = 20;
+  rv.width  = 20; rv.height = dh;
+
+  const ch = rh.getContext('2d');
+  const cv = rv.getContext('2d');
+  ch.fillStyle = '#1c1c38'; ch.fillRect(0, 0, dw, 20);
+  cv.fillStyle = '#1c1c38'; cv.fillRect(0, 0, 20, dh);
+
+  const minGap  = 55;
+  const raw     = minGap / S.zoom;
+  const steps   = [10,20,25,50,100,200,250,500,1000];
+  const step    = steps.find(n => n >= raw) || 1000;
+
+  ch.fillStyle = '#8888aa'; ch.font = '9px system-ui'; ch.textBaseline = 'top';
+  cv.fillStyle = '#8888aa'; cv.font = '9px system-ui'; cv.textBaseline = 'top';
+
+  for (let vx = 0; vx <= vw; vx += step) {
+    const dx = Math.round(vx * S.zoom);
+    ch.strokeStyle = '#3a3a60'; ch.lineWidth = 1;
+    ch.beginPath(); ch.moveTo(dx + 0.5, 13); ch.lineTo(dx + 0.5, 20); ch.stroke();
+    if (vx > 0) ch.fillText(String(vx), dx + 2, 2);
+  }
+  for (let vy = 0; vy <= vh; vy += step) {
+    const dy = Math.round(vy * S.zoom);
+    cv.strokeStyle = '#3a3a60'; cv.lineWidth = 1;
+    cv.beginPath(); cv.moveTo(13, dy + 0.5); cv.lineTo(20, dy + 0.5); cv.stroke();
+    if (vy > 0) {
+      cv.save(); cv.translate(10, dy - 2); cv.rotate(-Math.PI / 2);
+      cv.fillText(String(vy), 0, 0); cv.restore();
+    }
+  }
+}
+
+// ═══════════════════════ IMAGE COLOR EXTRACTION ═══════════════════════
+function extractImageColors(fabricImg, callback) {
+  const el = fabricImg._element;
+  if (!el) return;
+  const size = 64;
+  const off = document.createElement('canvas');
+  off.width = size; off.height = size;
+  const ctx = off.getContext('2d');
+  try { ctx.drawImage(el, 0, 0, size, size); } catch(e) { return; }
+  const px = ctx.getImageData(0, 0, size, size).data;
+  const buckets = {};
+  for (let i = 0; i < px.length; i += 4) {
+    if (px[i+3] < 128) continue;
+    const r = Math.round(px[i]   / 32) * 32;
+    const g = Math.round(px[i+1] / 32) * 32;
+    const b = Math.round(px[i+2] / 32) * 32;
+    const key = (r << 16) | (g << 8) | b;
+    buckets[key] = (buckets[key] || 0) + 1;
+  }
+  const colors = Object.entries(buckets)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([key]) => {
+      const n = Number(key);
+      const r = (n >> 16) & 0xff;
+      const g = (n >> 8)  & 0xff;
+      const b =  n        & 0xff;
+      return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+    });
+  callback(colors);
+}
+
+// ═══════════════════════ BACKGROUND SWATCHES ═══════════════════════
+function refreshBgSwatches(brand, extractedColors) {
+  const container = document.getElementById('bg-swatches');
+  const customEl  = container.querySelector('.bg-custom');
+
+  let colors;
+  if (extractedColors && extractedColors.length) {
+    // Image on canvas: show extracted colors + neutral pair
+    colors = extractedColors.map(hex => ({ hex, label: 'Image color' }));
+    if (!colors.find(c => c.hex === '#000000')) colors.push({ hex: '#000000', label: 'Black', border: true });
+    if (!colors.find(c => c.hex === '#ffffff')) colors.push({ hex: '#ffffff', label: 'White', border: true });
+  } else if (brand === BRAND.indivisible) {
+    colors = [
+      { hex: '#00417b', label: 'Indivisible Blue' },
+      { hex: '#ffba08', label: 'Yellow' },
+      { hex: '#ff0c0c', label: 'Red' },
+      { hex: '#21dee8', label: 'Light Blue' },
+      { hex: '#ffffff', label: 'White', border: true },
+      { hex: '#000000', label: 'Black', border: true },
+    ];
+  } else if (brand === BRAND.nokings) {
+    colors = [
+      { hex: '#000000', label: 'Black', border: true },
+      { hex: '#ffba08', label: 'Yellow' },
+      { hex: '#ffffff', label: 'White', border: true },
+      { hex: '#ff0c0c', label: 'Red' },
+      { hex: '#1a1a2e', label: 'Dark Navy' },
+    ];
+  } else {
+    colors = [
+      { hex: '#00417b', label: 'Indivisible Blue' },
+      { hex: '#ffba08', label: 'Yellow' },
+      { hex: '#ff0c0c', label: 'Red' },
+      { hex: '#21dee8', label: 'Light Blue' },
+      { hex: '#000000', label: 'Black', border: true },
+      { hex: '#ffffff', label: 'White', border: true },
+      { hex: '#1a1a2e', label: 'Dark Navy' },
+    ];
+  }
+
+  container.querySelectorAll('.sw').forEach(el => el.remove());
+  colors.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'sw';
+    div.style.background = c.hex;
+    if (c.border) div.style.border = '1px solid #444';
+    div.title = c.label;
+    div.addEventListener('click', () => setBg(c.hex));
+    container.insertBefore(div, customEl);
+  });
+}
+
+// ═══════════════════════ ADD TEXT ═══════════════════════
+function addText() {
+  if (!S.template) { alert('Choose a template first.'); return; }
+  const b = S.currentBrand || BRAND.indivisible;
+  const tb = new fabric.Textbox('Your text here', {
+    left:   40 / S.zoom,
+    top:    40 / S.zoom,
+    width:  300 / S.zoom,
+    fontSize: 40 / S.zoom,
+    fontFamily: b.bodyFont,
+    fontWeight: '400',
+    fill:   b.textColor || '#ffffff',
+    editable: true,
+    splitByGrapheme: false,
+  });
+  S.canvas.add(tb);
+  S.canvas.setActiveObject(tb);
+  S.canvas.renderAll();
+}
+
+function addHeadline() {
+  if (!S.template) { alert('Choose a template first.'); return; }
+  const b = S.currentBrand || BRAND.indivisible;
+  const w = S.template.w;
+  const h = S.template.h;
+  const tb = new fabric.Textbox('HEADLINE TEXT', {
+    left:   40 / S.zoom,
+    top:    (h * 0.3) / S.zoom,
+    width:  (w - 80) / S.zoom,
+    fontSize: 90 / S.zoom,
+    fontFamily: b.headFont || 'Barlow Condensed',
+    fontWeight: b.headWeight || '900',
+    fill:   b.accentColor || '#ffba08',
+    textAlign: 'center',
+    editable: true,
+  });
+  S.canvas.add(tb);
+  S.canvas.setActiveObject(tb);
+  S.canvas.renderAll();
+}
+
+// ═══════════════════════ ADD IMAGE ═══════════════════════
+function triggerImageUpload() {
+  document.getElementById('img-upload').click();
+}
+
+function handleImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    fabric.Image.fromURL(e.target.result, (img) => {
+      scaleImageToFit(img);
+      S.canvas.add(img);
+      S.canvas.setActiveObject(img);
+      S.canvas.renderAll();
+    });
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function addLocalImage(key) {
+  if (!S.template) { alert('Choose a template first.'); return; }
+  const path = LOCAL_IMAGES[key];
+  if (!path) return;
+  fabric.Image.fromURL(path, (img) => {
+    if (!img) { alert(`Could not load image.\nPath: ${path}\n\nIf this is a file:// URL, you may need to launch Chrome with --allow-file-access-from-files`); return; }
+    // Scale logo to ~30% of canvas width by default
+    const scale = (S.template.w * 0.3) / img.width * (1 / S.zoom);
+    img.set({ left: 20, top: 20, scaleX: scale, scaleY: scale });
+    S.canvas.add(img);
+    S.canvas.setActiveObject(img);
+    S.canvas.renderAll();
+  }, { crossOrigin: null });
+}
+
+function scaleImageToFit(img) {
+  if (!S.template) return;
+  const dw = S.canvas.getWidth();
+  const dh = S.canvas.getHeight();
+  const scaleX = (dw * 0.8) / img.width;
+  const scaleY = (dh * 0.8) / img.height;
+  const scale = Math.min(scaleX, scaleY);
+  img.set({ scaleX: scale, scaleY: scale, left: dw * 0.1, top: dh * 0.1 });
+}
+
+// ═══════════════════════ SHAPES ═══════════════════════
+function addShape(type) {
+  if (!S.template) { alert('Choose a template first.'); return; }
+  const dw = S.canvas.getWidth();
+  const dh = S.canvas.getHeight();
+  let shape;
+  const fill = (S.currentBrand || BRAND.indivisible).accentColor || '#ffba08';
+  if (type === 'rect') {
+    shape = new fabric.Rect({ left:dw*0.1, top:dh*0.1, width:dw*0.4, height:dh*0.2, fill, rx:4, ry:4 });
+  } else {
+    shape = new fabric.Ellipse({ left:dw*0.1, top:dh*0.1, rx:dw*0.2, ry:dh*0.1, fill });
+  }
+  S.canvas.add(shape);
+  S.canvas.setActiveObject(shape);
+  S.canvas.renderAll();
+}
+
+// ═══════════════════════ OBJECT CONTROLS ═══════════════════════
+function updateProp(prop, value) {
+  const obj = S.canvas.getActiveObject();
+  if (!obj) return;
+  obj.set(prop, value);
+  // Special: if it's a textbox updating text, recalc
+  if (prop === 'text' && obj.type === 'textbox') {
+    obj.set('text', value);
+  }
+  S.canvas.renderAll();
+}
+
+function updatePropStyle(style) {
+  const obj = S.canvas.getActiveObject();
+  if (!obj || obj.type !== 'textbox') return;
+  obj.set({ fontStyle: style === 'italic' ? 'italic' : 'normal', underline: style === 'underline' });
+  S.canvas.renderAll();
+}
+
+function positionObj(pos) {
+  const obj = S.canvas.getActiveObject();
+  if (!obj || !S.canvas || !S.template) return;
+  const vw = S.template.w;
+  const vh = S.template.h;
+  const bw = obj.getBoundingRect().width  / S.zoom;
+  const bh = obj.getBoundingRect().height / S.zoom;
+  const pad = 20;
+
+  const positions = {
+    tl: { left: pad,              top: pad },
+    tc: { left: (vw-bw)/2,       top: pad },
+    tr: { left: vw-bw-pad,       top: pad },
+    ml: { left: pad,              top: (vh-bh)/2 },
+    mc: { left: (vw-bw)/2,       top: (vh-bh)/2 },
+    mr: { left: vw-bw-pad,       top: (vh-bh)/2 },
+    bl: { left: pad,              top: vh-bh-pad },
+    bc: { left: (vw-bw)/2,       top: vh-bh-pad },
+    br: { left: vw-bw-pad,       top: vh-bh-pad },
+  };
+  obj.set(positions[pos]);
+  S.canvas.renderAll();
+}
+
+function fitObj(mode) {
+  const obj = S.canvas.getActiveObject();
+  if (!obj || !S.template) return;
+  const vw = S.template.w;
+  const vh = S.template.h;
+  const scale = mode === 'contain'
+    ? Math.min(vw / obj.width, vh / obj.height)
+    : Math.max(vw / obj.width, vh / obj.height);
+  obj.set({ scaleX: scale, scaleY: scale,
+    left: (vw - obj.width  * scale) / 2,
+    top:  (vh - obj.height * scale) / 2 });
+  S.canvas.renderAll();
+}
+
+function deleteSelected() {
+  const obj = S.canvas.getActiveObject();
+  if (!obj) return;
+  if (obj.type === 'activeSelection') {
+    obj.getObjects().forEach(o => S.canvas.remove(o));
+    S.canvas.discardActiveObject();
+  } else {
+    S.canvas.remove(obj);
+  }
+  S.canvas.renderAll();
+}
+
+function sendBack() {
+  const obj = S.canvas.getActiveObject();
+  if (obj) { S.canvas.sendBackwards(obj); S.canvas.renderAll(); }
+}
+
+function bringForward() {
+  const obj = S.canvas.getActiveObject();
+  if (obj) { S.canvas.bringForward(obj); S.canvas.renderAll(); }
+}
+
+// ═══════════════════════ PROPERTIES PANEL ═══════════════════════
+function updatePropsPanel(e) {
+  const obj = S.canvas.getActiveObject();
+  if (!obj) { clearPropsPanel(); return; }
+  const area = document.getElementById('props-area');
+
+  if (obj.type === 'textbox' || obj.type === 'text' || obj.type === 'i-text') {
+    area.innerHTML = document.getElementById('tpl-text-props').innerHTML;
+    area.querySelector('#prop-text').value   = obj.text || '';
+    area.querySelector('#prop-font').value   = obj.fontFamily || 'Barlow Condensed';
+    area.querySelector('#prop-size').value   = Math.round((obj.fontSize || 40) * S.zoom);
+    area.querySelector('#prop-weight').value = String(obj.fontWeight || '400');
+    area.querySelector('#prop-align').value  = obj.textAlign || 'left';
+    area.querySelector('#prop-opacity').value = Math.round((obj.opacity ?? 1) * 100);
+    area.querySelector('#opacity-val').textContent = Math.round((obj.opacity ?? 1) * 100);
+    area.querySelector('#prop-color-custom').value = obj.fill || '#ffffff';
+
+    // Re-wire event handlers (they were cloned from template, so we must re-bind)
+    area.querySelector('#prop-text').addEventListener('input', function() { updateProp('text', this.value); });
+    area.querySelector('#prop-font').addEventListener('change', function() { updateProp('fontFamily', this.value); });
+    area.querySelector('#prop-size').addEventListener('input', function() { updateProp('fontSize', Math.round(+this.value / S.zoom)); });
+    area.querySelector('#prop-weight').addEventListener('change', function() { updateProp('fontWeight', this.value); });
+    area.querySelector('#prop-align').addEventListener('change', function() { updateProp('textAlign', this.value); });
+    area.querySelector('#prop-style').addEventListener('change', function() { updatePropStyle(this.value); });
+    area.querySelector('#prop-opacity').addEventListener('input', function() {
+      updateProp('opacity', this.value/100);
+      area.querySelector('#opacity-val').textContent = this.value;
+    });
+    area.querySelector('#prop-color-custom').addEventListener('input', function() { updateProp('fill', this.value); });
+
+  } else if (obj.type === 'image') {
+    area.innerHTML = document.getElementById('tpl-image-props').innerHTML;
+    area.querySelector('#img-prop-opacity').value = Math.round((obj.opacity ?? 1) * 100);
+    area.querySelector('#img-opacity-val').textContent = Math.round((obj.opacity ?? 1) * 100);
+    area.querySelector('#img-prop-opacity').addEventListener('input', function() {
+      updateProp('opacity', this.value/100);
+      area.querySelector('#img-opacity-val').textContent = this.value;
+    });
+
+  } else if (obj.type === 'rect' || obj.type === 'ellipse' || obj.type === 'circle') {
+    area.innerHTML = document.getElementById('tpl-shape-props').innerHTML;
+    area.querySelector('#shape-prop-opacity').value = Math.round((obj.opacity ?? 1) * 100);
+    area.querySelector('#shape-opacity-val').textContent = Math.round((obj.opacity ?? 1) * 100);
+    area.querySelector('#shape-prop-opacity').addEventListener('input', function() {
+      updateProp('opacity', this.value/100);
+      area.querySelector('#shape-opacity-val').textContent = this.value;
+    });
+    area.querySelector('#prop-stroke').value = obj.stroke || '#000000';
+    area.querySelector('#prop-stroke-w').value = obj.strokeWidth || 0;
+    area.querySelector('#prop-stroke').addEventListener('input', function() { updateProp('stroke', this.value); });
+    area.querySelector('#prop-stroke-w').addEventListener('input', function() { updateProp('strokeWidth', +this.value); });
+  } else {
+    area.innerHTML = `<p class="no-sel" style="font-size:11px">Type: ${obj.type}</p>`;
+  }
+  updateStatusObj();
+}
+
+function clearPropsPanel() {
+  document.getElementById('props-area').innerHTML = '<p class="no-sel">Select an object to edit its properties</p>';
+  updateStatusObj();
+}
+
+function updateStatusObj() {
+  const obj = S.canvas.getActiveObject();
+  const el = document.getElementById('status-obj');
+  if (!obj) { el.textContent = 'No object selected'; return; }
+  const t = obj.type === 'textbox' ? `Text: "${(obj.text||'').slice(0,20)}..."` : `${obj.type} selected`;
+  el.textContent = t;
+}
+
+// ═══════════════════════ LAYER LIST ═══════════════════════
+function refreshLayers() {
+  const list = document.getElementById('layer-list');
+  const objects = S.canvas.getObjects();
+  const active = S.canvas.getActiveObject();
+
+  list.innerHTML = objects.length === 0 ? '<p style="color:var(--muted);font-size:11px">No objects yet</p>' : '';
+
+  // Render in reverse (top of stack first)
+  [...objects].reverse().forEach((obj, i) => {
+    const realIdx = objects.length - 1 - i;
+    const isActive = obj === active;
+    const icon = obj.type === 'textbox' ? '📝' : obj.type === 'image' ? '🖼' : '⬛';
+    const label = obj.type === 'textbox' ? (obj.text || '').slice(0, 20) || 'Text' : obj.type === 'image' ? 'Image' : obj.type;
+
+    const div = document.createElement('div');
+    div.className = 'layer' + (isActive ? ' sel' : '');
+    div.innerHTML = `<span class="layer-icon">${icon}</span><span class="layer-lbl" title="${label}">${label}</span><span class="layer-del" title="Delete">×</span>`;
+    div.onclick = () => { S.canvas.setActiveObject(obj); S.canvas.renderAll(); refreshLayers(); updatePropsPanel(); };
+    div.querySelector('.layer-del').onclick = (e) => { e.stopPropagation(); S.canvas.remove(obj); S.canvas.renderAll(); };
+    list.appendChild(div);
+  });
+}
+
+// ═══════════════════════ ALT TEXT ═══════════════════════
+function updateCC(textareaId, counterId, max) {
+  const el   = document.getElementById(textareaId);
+  const cc   = document.getElementById(counterId);
+  const len  = el.value.length;
+  cc.textContent = `${len} / ${max}`;
+  cc.className = 'cc' + (len > max ? ' over' : len > max*0.85 ? ' warn' : '');
+}
+
+function copyAlt() {
+  const short = document.getElementById('alt-short').value;
+  const long  = document.getElementById('alt-long').value;
+  const text  = short ? `Short: ${short}\n\nFull: ${long}` : long;
+  navigator.clipboard.writeText(text).then(() => alert('Alt text copied to clipboard!'));
+}
+
+function autoSuggestAlt() {
+  if (!S.template) return;
+  const objects = S.canvas.getObjects();
+  const texts   = objects.filter(o => o.type === 'textbox').map(o => o.text || '');
+  const imgCount = objects.filter(o => o.type === 'image').length;
+  const bg = 'a graphic with ' + (S.canvas.backgroundColor || 'colored') + ' background';
+  const short = texts.length ? texts[0].slice(0, 100) : (S.currentBrand ? S.currentBrand.name + ' social graphic' : 'Indivisible social media graphic');
+  const long = [
+    `${bg}.`,
+    texts.length ? `Text reads: "${texts.join('" / "')}"` : '',
+    imgCount ? `Contains ${imgCount} image(s).` : '',
+    S.currentBrand ? `Campaign: ${S.currentBrand.name}.` : '',
+  ].filter(Boolean).join(' ');
+
+  document.getElementById('alt-short').value = short.slice(0, 125);
+  document.getElementById('alt-long').value  = long.slice(0, 500);
+  updateCC('alt-short','cc-short',125);
+  updateCC('alt-long','cc-long',500);
+}
+
+// ═══════════════════════ EXPORT ═══════════════════════
+function downloadPNG() {
+  if (!S.template) { alert('Choose a template first.'); return; }
+  const multiplier = 1 / S.zoom;
+  const dataURL = S.canvas.toDataURL({ format:'png', quality:1, multiplier });
+  const name    = (document.getElementById('export-name').value || 'indivisible-graphic').trim();
+  triggerDownload(dataURL, `${name}.png`);
+}
+
+function downloadJSON() {
+  if (!S.template) { alert('Choose a template first.'); return; }
+  const json = JSON.stringify({
+    template: S.template.key,
+    brand:    S.currentBrand ? Object.keys(BRAND).find(k => BRAND[k] === S.currentBrand) : null,
+    altShort: document.getElementById('alt-short').value,
+    altLong:  document.getElementById('alt-long').value,
+    canvas:   S.canvas.toJSON(['id']),
+  }, null, 2);
+  const blob = new Blob([json], { type:'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const name = (document.getElementById('export-name').value || 'indivisible-project').trim();
+  triggerDownload(url, `${name}.json`);
+  URL.revokeObjectURL(url);
+}
+
+function triggerLoadJSON() {
+  document.getElementById('json-upload').click();
+}
+
+function loadJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.template) applyTemplate(data.template);
+      if (data.canvas) {
+        S.canvas.loadFromJSON(data.canvas, () => {
+          S.canvas.renderAll();
+          refreshLayers();
+        });
+      }
+      if (data.altShort) document.getElementById('alt-short').value = data.altShort;
+      if (data.altLong)  document.getElementById('alt-long').value  = data.altLong;
+      if (data.brand && BRAND[data.brand]) { S.currentBrand = BRAND[data.brand]; }
+    } catch(err) {
+      alert('Failed to load project: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function triggerDownload(url, filename) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+</script>
+
+</body>
+</html>
