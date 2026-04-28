@@ -32,6 +32,10 @@
     .hdr { background:var(--ind-blue); padding:8px 14px; display:flex; align-items:center; gap:10px; border-bottom:3px solid var(--ind-yellow); flex-shrink:0; }
     .hdr h1 { font-family:'Barlow Condensed',sans-serif; font-size:22px; font-weight:900; color:var(--ind-yellow); letter-spacing:1px; }
     .hdr .sub { font-size:13px; color:rgba(255,255,255,0.6); }
+    .hdr .toolbar { display:flex; gap:4px; align-items:center; }
+    .hdr .toolbar button { background:rgba(255,186,8,.2); border:1px solid var(--ind-yellow); color:var(--ind-yellow); padding:4px 8px; border-radius:3px; cursor:pointer; font-size:13px; font-weight:700; transition:background .12s; }
+    .hdr .toolbar button:hover:not(:disabled) { background:rgba(255,186,8,.3); }
+    .hdr .toolbar button:disabled { opacity:0.4; cursor:not-allowed; }
     .hdr .tpl-badge { margin-left:auto; background:rgba(255,186,8,.15); border:1px solid var(--ind-yellow); color:var(--ind-yellow); padding:2px 10px; border-radius:4px; font-size:13px; font-weight:700; }
 
     /* ── Main 3-col layout ── */
@@ -147,6 +151,10 @@
 <header class="hdr">
   <h1>✊ Indivisible Graphic Studio</h1>
   <span class="sub">Auburn WA · No Kings campaign</span>
+  <div class="toolbar">
+    <button id="btn-undo" onclick="undo()" title="Undo (Ctrl+Z)" disabled>↩</button>
+    <button id="btn-redo" onclick="redo()" title="Redo (Ctrl+Y)" disabled>↪</button>
+  </div>
   <span class="tpl-badge" id="tpl-badge">No template</span>
 </header>
 
@@ -299,7 +307,18 @@
         <label>Filename</label>
         <input type="text" id="export-name" value="indivisible-graphic" placeholder="filename (no extension)">
       </div>
-      <button class="btn btn-yellow" onclick="downloadPNG()" style="text-align:center;font-size:14px;">⬇ Download PNG</button>
+      <div class="fr">
+        <label>Format</label>
+        <select id="export-format" onchange="toggleQualitySlider()">
+          <option value="png">PNG (lossless)</option>
+          <option value="jpeg">JPEG (compressed)</option>
+        </select>
+      </div>
+      <div class="fr" id="jpeg-quality-wrap" style="display:none">
+        <label>Quality <span id="jpeg-quality-val">85</span>%</label>
+        <input type="range" id="jpeg-quality" min="10" max="100" value="85" oninput="document.getElementById('jpeg-quality-val').textContent=this.value">
+      </div>
+      <button class="btn btn-yellow" onclick="downloadImage()" style="text-align:center;font-size:14px;">⬇ Download</button>
       <button class="btn btn-ghost" style="margin-top:3px" onclick="downloadJSON()">💾 Save Project (.json)</button>
       <button class="btn btn-ghost" style="margin-top:3px" onclick="triggerLoadJSON()">📂 Load Project (.json)</button>
       <input type="file" id="json-upload" accept=".json" style="display:none" onchange="loadJSON(event)">
@@ -309,6 +328,7 @@
     <div>
       <div class="sec">Canvas Size</div>
       <div id="canvas-info" style="font-size:11px;color:var(--muted);">No template loaded</div>
+      <button class="btn btn-ghost" style="margin-top:6px;font-size:11px" onclick="resizeCanvas()">⤡ Resize Canvas</button>
     </div>
 
   </aside>
@@ -316,7 +336,7 @@
 
 <!-- ══ STATUS BAR ══ -->
 <div class="status">
-  <span>✊ Indivisible Graphic Studio v1.1</span>
+  <span>✊ Indivisible Graphic Studio v2.0</span>
   <span id="status-xy">x:— y:—</span>
   <span id="status-obj">No object selected</span>
   <span id="status-zoom">Zoom: —</span>
@@ -403,6 +423,10 @@
   <div class="fr">
     <label>Opacity <span id="img-opacity-val">100</span>%</label>
     <input type="range" id="img-prop-opacity" min="0" max="100" value="100" oninput="updateProp('opacity',this.value/100);document.getElementById('img-opacity-val').textContent=this.value">
+  </div>
+  <div class="row2">
+    <button class="btn btn-ghost" style="font-size:11px;text-align:center" onclick="upscaleImage()">⬆ 2×</button>
+    <button class="btn btn-ghost" style="font-size:11px;text-align:center" onclick="downscaleImage()">⬇ ½</button>
   </div>
   <div class="sec" style="margin-top:8px">Position</div>
   <div class="pos-grid">
@@ -517,7 +541,90 @@ const S = {
   template: null,
   zoom: 1,
   currentBrand: null,
+  history: { stack: [], pointer: -1, saving: false, max: 30 },
+  clipboard: null,
 };
+
+// ═══════════════════════ UNDO / REDO ═══════════════════════
+function saveState() {
+  if (S.history.saving || !S.canvas) return;
+  S.history.saving = true;
+  const json = JSON.stringify(S.canvas.toJSON(['id']));
+  S.history.stack.splice(S.history.pointer + 1);
+  S.history.stack.push(json);
+  if (S.history.stack.length > S.history.max) S.history.stack.shift();
+  else S.history.pointer++;
+  updateUndoRedoBtns();
+  S.history.saving = false;
+}
+
+function undo() {
+  if (S.history.pointer <= 0 || !S.canvas) return;
+  S.history.saving = true;
+  S.history.pointer--;
+  const json = JSON.parse(S.history.stack[S.history.pointer]);
+  S.canvas.loadFromJSON(json, () => {
+    S.canvas.renderAll();
+    refreshLayers();
+    clearPropsPanel();
+    drawRulers();
+    updateUndoRedoBtns();
+    S.history.saving = false;
+  });
+}
+
+function redo() {
+  if (S.history.pointer >= S.history.stack.length - 1 || !S.canvas) return;
+  S.history.saving = true;
+  S.history.pointer++;
+  const json = JSON.parse(S.history.stack[S.history.pointer]);
+  S.canvas.loadFromJSON(json, () => {
+    S.canvas.renderAll();
+    refreshLayers();
+    clearPropsPanel();
+    drawRulers();
+    updateUndoRedoBtns();
+    S.history.saving = false;
+  });
+}
+
+function updateUndoRedoBtns() {
+  const undo = document.getElementById('btn-undo');
+  const redo = document.getElementById('btn-redo');
+  if (undo) undo.disabled = S.history.pointer <= 0;
+  if (redo) redo.disabled = S.history.pointer >= S.history.stack.length - 1;
+}
+
+// ═══════════════════════ COPY / PASTE ═══════════════════════
+function copySelected() {
+  const obj = S.canvas.getActiveObject();
+  if (!obj) return;
+  obj.clone((cloned) => { S.clipboard = cloned; });
+}
+
+function pasteSelected() {
+  if (!S.clipboard || !S.canvas) return;
+  S.clipboard.clone((cloned) => {
+    S.canvas.discardActiveObject();
+    cloned.set({ left: cloned.left + 20, top: cloned.top + 20, evented: true });
+    S.canvas.add(cloned);
+    S.canvas.setActiveObject(cloned);
+    S.canvas.renderAll();
+    saveState();
+  });
+}
+
+function duplicateSelected() {
+  const obj = S.canvas.getActiveObject();
+  if (!obj) return;
+  obj.clone((cloned) => {
+    cloned.set({ left: cloned.left + 20, top: cloned.top + 20, evented: true });
+    S.canvas.add(cloned);
+    S.canvas.setActiveObject(cloned);
+    S.canvas.renderAll();
+    saveState();
+  });
+}
 
 // ═══════════════════════ INIT ═══════════════════════
 window.addEventListener('DOMContentLoaded', () => {
@@ -529,14 +636,15 @@ window.addEventListener('DOMContentLoaded', () => {
   S.canvas.on('selection:created',  updatePropsPanel);
   S.canvas.on('selection:updated',  updatePropsPanel);
   S.canvas.on('selection:cleared',  clearPropsPanel);
-  S.canvas.on('object:modified',    () => { refreshLayers(); updateStatusObj(); });
+  S.canvas.on('object:modified',    () => { refreshLayers(); updateStatusObj(); saveState(); });
   S.canvas.on('object:added',       (e) => {
     refreshLayers();
     if (e.target && e.target.type === 'image') {
       extractImageColors(e.target, (colors) => refreshBgSwatches(S.currentBrand, colors));
     }
+    saveState();
   });
-  S.canvas.on('object:removed',     () => refreshLayers());
+  S.canvas.on('object:removed',     () => { refreshLayers(); saveState(); });
   S.canvas.on('mouse:move',         (e) => {
     if (!S.template) return;
     const p = S.canvas.getPointer(e.e);
@@ -548,10 +656,37 @@ window.addEventListener('DOMContentLoaded', () => {
   // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-    if ((e.key === 'Delete' || e.key === 'Backspace') && S.canvas.getActiveObject()) {
+    const obj = S.canvas.getActiveObject();
+    const isCtrl = e.ctrlKey || e.metaKey;
+    const step = e.shiftKey ? 10 : 1;
+
+    if ((e.key === 'Delete' || e.key === 'Backspace') && obj) {
       deleteSelected();
+    } else if (e.key === 'Escape') {
+      S.canvas.discardActiveObject().renderAll();
+    } else if (isCtrl && e.key === 'z' && !e.shiftKey) {
+      e.preventDefault();
+      undo();
+    } else if ((isCtrl && e.key === 'y') || (isCtrl && e.shiftKey && e.key === 'Z')) {
+      e.preventDefault();
+      redo();
+    } else if (isCtrl && e.key === 'c') {
+      e.preventDefault();
+      copySelected();
+    } else if (isCtrl && e.key === 'v') {
+      e.preventDefault();
+      pasteSelected();
+    } else if (isCtrl && e.key === 'd') {
+      e.preventDefault();
+      duplicateSelected();
+    } else if (obj && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+      e.preventDefault();
+      const delta = { ArrowUp: {l:0,t:-step}, ArrowDown: {l:0,t:step}, ArrowLeft: {l:-step,t:0}, ArrowRight: {l:step,t:0} };
+      const d = delta[e.key];
+      obj.set({ left: obj.left + d.l, top: obj.top + d.t });
+      S.canvas.renderAll();
+      saveState();
     }
-    if (e.key === 'Escape') S.canvas.discardActiveObject().renderAll();
   });
 
   // Load fonts into FontFace API so Fabric can render them
@@ -852,6 +987,56 @@ function scaleImageToFit(img) {
   img.set({ scaleX: scale, scaleY: scale, left: dw * 0.1, top: dh * 0.1 });
 }
 
+function upscaleImage() {
+  const obj = S.canvas.getActiveObject();
+  if (!obj || obj.type !== 'image') return;
+  obj.set({ scaleX: obj.scaleX * 2, scaleY: obj.scaleY * 2 });
+  S.canvas.renderAll();
+  saveState();
+}
+
+function downscaleImage() {
+  const obj = S.canvas.getActiveObject();
+  if (!obj || obj.type !== 'image') return;
+  obj.set({ scaleX: obj.scaleX * 0.5, scaleY: obj.scaleY * 0.5 });
+  S.canvas.renderAll();
+  saveState();
+}
+
+function resizeCanvas() {
+  if (!S.template) { alert('Choose a template first.'); return; }
+  const w = prompt('Canvas width (px):', S.template.w);
+  if (w === null) return;
+  const h = prompt('Canvas height (px):', S.template.h);
+  if (h === null) return;
+  const newW = Math.max(100, parseInt(w) || S.template.w);
+  const newH = Math.max(100, parseInt(h) || S.template.h);
+  const scaleX = newW / S.template.w;
+  const scaleY = newH / S.template.h;
+
+  S.template.w = newW;
+  S.template.h = newH;
+  const zoom = Math.min(MAX_DISPLAY_W / newW, MAX_DISPLAY_H / newH, 1);
+  const dw = Math.round(newW * zoom);
+  const dh = Math.round(newH * zoom);
+
+  S.canvas.getObjects().forEach(obj => {
+    obj.set({ left: obj.left * scaleX, top: obj.top * scaleY, scaleX: obj.scaleX * scaleX, scaleY: obj.scaleY * scaleY });
+  });
+
+  S.canvas.setWidth(dw);
+  S.canvas.setHeight(dh);
+  S.canvas.setZoom(zoom);
+  S.zoom = zoom;
+  S.template.zoom = zoom;
+
+  document.getElementById('canvas-info').textContent = `${newW} × ${newH} px · Display: ${Math.round(zoom*100)}%`;
+  document.getElementById('status-zoom').textContent = `Zoom: ${Math.round(zoom*100)}%`;
+  drawRulers();
+  S.canvas.renderAll();
+  saveState();
+}
+
 // ═══════════════════════ SHAPES ═══════════════════════
 function addShape(type) {
   if (!S.template) { alert('Choose a template first.'); return; }
@@ -1079,12 +1264,31 @@ function autoSuggestAlt() {
 }
 
 // ═══════════════════════ EXPORT ═══════════════════════
-function downloadPNG() {
+function toggleQualitySlider() {
+  const wrap = document.getElementById('jpeg-quality-wrap');
+  const format = document.getElementById('export-format').value;
+  if (wrap) wrap.style.display = format === 'jpeg' ? 'flex' : 'none';
+}
+
+function downloadImage() {
   if (!S.template) { alert('Choose a template first.'); return; }
+  const format = document.getElementById('export-format').value;
   const multiplier = 1 / S.zoom;
-  const dataURL = S.canvas.toDataURL({ format:'png', quality:1, multiplier });
-  const name    = (document.getElementById('export-name').value || 'indivisible-graphic').trim();
-  triggerDownload(dataURL, `${name}.png`);
+  let dataURL, ext;
+  if (format === 'jpeg') {
+    const quality = +document.getElementById('jpeg-quality').value / 100;
+    dataURL = S.canvas.toDataURL({ format:'jpeg', quality, multiplier });
+    ext = 'jpg';
+  } else {
+    dataURL = S.canvas.toDataURL({ format:'png', quality:1, multiplier });
+    ext = 'png';
+  }
+  const name = (document.getElementById('export-name').value || 'indivisible-graphic').trim();
+  triggerDownload(dataURL, `${name}.${ext}`);
+}
+
+function downloadPNG() {
+  downloadImage();
 }
 
 function downloadJSON() {
